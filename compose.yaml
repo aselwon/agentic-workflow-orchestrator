@@ -1,0 +1,42 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: opsagent
+      POSTGRES_PASSWORD: opsagent_local
+      POSTGRES_DB: opsagent
+    ports: ["127.0.0.1:54329:5432"]
+    volumes: ["opsagent_data:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U opsagent -d opsagent"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+  mock-orders:
+    build: .
+    command: ["uvicorn", "app.mock_orders:app", "--host", "0.0.0.0", "--port", "9001"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:9001/health')"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+  app:
+    build: .
+    environment:
+      DATABASE_URL: postgresql+psycopg://opsagent:opsagent_local@db:5432/opsagent
+      MOCK_ORDER_URL: http://mock-orders:9001
+      MOCK_LLM: "1"
+      CONFIDENCE_THRESHOLD: "0.85"
+      MAX_STEPS: "8"
+      RUN_TIMEOUT_SECONDS: "900"
+    ports: ["127.0.0.1:${OPSAGENT_PORT:-8088}:8000"]
+    depends_on:
+      db: {condition: service_healthy}
+      mock-orders: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+volumes:
+  opsagent_data:

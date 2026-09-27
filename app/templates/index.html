@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Support work.<br>A clear trail at every step.</h1>
+<p class="intro">Find a ticket, check its order, review a reply and schedule a follow-up.</p>
+<section class="card">
+  <h2>Start a workflow</h2>
+  <form hx-post="/ui/runs" hx-disabled-elt="find button">
+    <label for="query"><span class="prompt" aria-hidden="true">&gt;</span> Ticket search</label>
+    <div class="row"><input id="query" name="query" value="delayed" required maxlength="500"><button>Start run →</button></div>
+  </form>
+  <p class="muted">Try “delayed”, “tracking” or “T-1001”. Each run handles the first matching ticket.</p>
+</section>
+<section><h2>Recent runs</h2>
+{% for run in runs %}<a class="run-row" href="/runs/{{ run.id }}"><span>{{ run.query }}<small>{{ run.id }}</small></span><span class="badge {{ run.status }}">{{ run.status }}</span></a>
+{% else %}<p class="muted">No runs yet. Start one above to see the workflow unfold.</p>{% endfor %}
+</section>
+{% endblock %}

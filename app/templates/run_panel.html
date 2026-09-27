@@ -1,0 +1,27 @@
+<section id="run-panel" {% if run.status in ['queued', 'running', 'waiting_human'] %}hx-get="/ui/runs/{{ run.id }}" hx-trigger="every 1s" hx-swap="outerHTML" hx-sync="this:replace"{% endif %}>
+  <div class="row heading"><h1>{{ run.query }}</h1><span class="badge {{ run.status }}">{{ run.status }}</span></div>
+  <p class="muted mono">{{ run.id }}</p>
+  <p class="run-meta">{{ run.steps }} / {{ run.max_steps }} tool steps · Deadline {{ run.deadline }}</p>
+  {% if run.error %}<div class="error" role="alert">{{ run.error }}</div>{% endif %}
+  {% if run.status == 'waiting_human' and run.pending %}
+  <section class="card approval">
+    <p class="eyebrow">HUMAN REVIEW REQUIRED</p><h2>Approve this draft?</h2>
+    <p>Confidence {{ run.pending.call.confidence }} is below {{ run.pending.threshold }}. Approval applies to the exact arguments below.</p>
+    <pre>{{ run.pending.call.arguments | tojson(indent=2) }}</pre>
+    <form hx-post="/ui/runs/{{ run.id }}/decision" hx-target="#run-panel" hx-swap="outerHTML" hx-sync="#run-panel:replace" hx-disabled-elt="find button">
+      <input type="hidden" name="approval_id" value="{{ run.pending.id }}">
+      <button name="decision" value="approve">Approve draft</button>
+      <button name="decision" value="reject" class="secondary">Reject & stop</button>
+    </form>
+  </section>
+  {% endif %}
+  {% if run.status == 'succeeded' %}<div class="success">Workflow completed. Draft saved and follow-up scheduled.</div>{% endif %}
+  <h2>Step log</h2>
+  <p class="muted">Structured planning decisions, tool calls, results and human actions in order.</p>
+  <ol class="timeline">{% for event in run.events %}
+    <li><div class="event-title"><strong>#{{ event.sequence }} · {{ event.kind }}</strong><small>{{ event.created_at }}</small></div>
+      <pre>{{ event.data | tojson(indent=2) }}</pre>
+    </li>{% endfor %}</ol>
+  <details><summary>Persisted memory</summary><pre>{{ run.memory | tojson(indent=2) }}</pre></details>
+  <p><a href="/api/runs/{{ run.id }}">View full JSON audit →</a></p>
+</section>
