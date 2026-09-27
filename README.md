@@ -2,6 +2,11 @@
 
 OpsAgent is a small agentic orchestrator for support workflows. It plans a bounded sequence of steps, calls allowlisted tools, persists run memory, pauses for human approval, and records an audit trail. The default `MOCK_LLM=1` planner is deterministic and works without an external model provider.
 
+## Public demo
+
+No public demo is currently available. The application provides a local UI/API demo through Docker Compose; see the quick start below.
+
+
 ## Quick start with Docker Compose
 
 Docker with Compose is required. Start the application and run the end-to-end mock demonstration:
